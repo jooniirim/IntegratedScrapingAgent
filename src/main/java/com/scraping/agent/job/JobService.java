@@ -9,6 +9,6 @@ public interface JobService {
 
     String getAgentType();
 
-    boolean doJob(Map requestValue);
+    void doJob(Map requestValue);
 
 }

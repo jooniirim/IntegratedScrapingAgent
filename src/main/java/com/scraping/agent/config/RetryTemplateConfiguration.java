@@ -27,6 +27,7 @@ import java.net.URI;
 
 /*
     RestTemplate 재시도 위한 설정
+    // TODO 삭제 고려!!!!!
  */
 @EnableRetry
 @Configuration
