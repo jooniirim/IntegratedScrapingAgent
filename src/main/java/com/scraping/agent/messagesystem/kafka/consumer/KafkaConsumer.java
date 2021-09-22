@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+/**
+ * KafkaConsumer 설정
+ */
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -33,16 +36,22 @@ public class KafkaConsumer implements Consumer<ConsumerRecord<String, String>> {
     @Autowired
     ConvertUtil convertUtil;
 
+    /**
+     * KafkaListener 설정으로 대상 topic polling 및 queue 발행 시 consume 메소드
+     * @param consumerRecord
+     */
     @Override
     @KafkaListener(topics = "${kafka.topic.name}", groupId="${kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
     public void consume(ConsumerRecord<String, String> consumerRecord) {
         try {
             String topicMessage = consumerRecord.value();
             JSONObject message = jsonUtil.jsonParser(topicMessage);
-
             String agentType = jsonUtil.getType(message);
 
-            log.info("Consumer ::::: 1. 작업 시작 : Topic Consume / Type 구분(HTML or API)");
+            log.info("Consumer ::::: 1. job 개시 로깅 queue");
+            producer.requestLogSend(convertUtil.getMapFromJsonObject(message));
+
+            log.info("Consumer ::::: 2. 작업 시작 : Topic Consume / Type 구분(HTML or API)");
             jobLauncherService.executeJob(agentType, message);
         } catch (ParseException parseException) {
             log.info("Consumer ::::: Parse 에러 Alert queue");

@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+/**
+ * JobSerivce 구현체 : REST API Scraping Job
+ */
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -29,16 +32,16 @@ public class ApiJobServiceImpl implements JobService {
         return "API";
     }
 
+    /**
+     * Job 시작 로깅 및 외부 REST API 호출 메소드
+     * @param param
+     */
     @Override
     public void doJob(Map param) {
         try {
             log.info("API - doJob ::::: 1. Map 에서 ApiAgentDto 로 변환");
             ApiAgentDto apiAgentDto = (ApiAgentDto) ConvertUtil.convertMapToObject(param, ApiAgentDto.class);
-
-            log.info("API - doJob ::::: 2. job 개시 로깅 queue");
-            producer.requestLogSend(param);
-
-            log.info("API - doJob ::::: 3. 호출 대상 외부 Rest API 호출");
+            log.info("API - doJob ::::: 2. 호출 대상 외부 Rest API 호출");
             apiClient.callExternal(apiAgentDto);
         } catch (Exception e) {
             log.info("API - doJob ::::: 외부 Rest API 호출 에러");

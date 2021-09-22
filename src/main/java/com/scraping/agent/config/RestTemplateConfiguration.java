@@ -19,6 +19,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 
+/**
+ * REST API 호출 위한 RestTemplate 설정 클래스
+ */
 @Slf4j
 @EnableRetry
 @Configuration
@@ -38,6 +41,10 @@ public class RestTemplateConfiguration {
     @Value("${resttemplate.retry.attempts}")
     private int MAX_RETRY_ATTEMPTS;
 
+    /**
+     * 실패시 재시도 가능하도록 설정
+     * @return HTTP 통신 간 Timeout 설정 및 Connection Pool 설정, 재시도 설정된 Resttemplate
+     */
     @Bean
     public RestTemplate retryableRestTemplate(){
         
@@ -54,7 +61,10 @@ public class RestTemplateConfiguration {
 
         RestTemplate restTemplate = new RestTemplate(factory){
             @Override
-            @Retryable(value = RestClientException.class, maxAttempts = 3, backoff = @Backoff(delay = 1000)) // 2
+            @Retryable(
+                    value = RestClientException.class,
+                    maxAttempts = 3,
+                    backoff = @Backoff(delay = 1000))
             public <T> ResponseEntity<T> exchange(URI url, HttpMethod method, HttpEntity<?> requestEntity, Class<T> responseType)
                     throws RestClientException {
                 return super.exchange(url, method, requestEntity, responseType);
@@ -62,11 +72,10 @@ public class RestTemplateConfiguration {
 
             @Recover
             public <T> ResponseEntity<String> exchangeRecover(RestClientException e) {
-                log.info("재시도 횟수 초과!!!!");
-                log.info("1) DB 테이블 상에서 에러 상태로 변경 2) Error Queue에 Produce");
                 return ResponseEntity.badRequest().body("재시도 실패");
             }
         };
+
         return restTemplate;
 
     }

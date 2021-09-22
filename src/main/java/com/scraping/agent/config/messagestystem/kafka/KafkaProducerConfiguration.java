@@ -13,12 +13,19 @@ import org.springframework.kafka.core.ProducerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Kafka Producer 설정
+ */
 @Slf4j
 @Configuration
 public class KafkaProducerConfiguration {
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    /**
+     * Producer 설정
+     * @return props
+     */
     @Bean
     public Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
@@ -31,11 +38,19 @@ public class KafkaProducerConfiguration {
         return props;
     }
 
+    /**
+     * ProducerFactory 설정
+     * @return ProducerFactory
+     */
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
+    /**
+     * kafkaTemplate 설정
+     * @return KafkaTemplate
+     */
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());

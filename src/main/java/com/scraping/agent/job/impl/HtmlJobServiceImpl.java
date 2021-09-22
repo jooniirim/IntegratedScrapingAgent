@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+/**
+ * JobSerivce 구현체 : HTML Scraping Job
+ */
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -29,6 +32,10 @@ public class HtmlJobServiceImpl implements JobService {
     @Qualifier("kafkaProducer")
     private Producer producer;
 
+    /**
+     * Job 시작 로깅 및 HTML Scraping work 호출 실행 메소드
+     * @param param
+     */
     @Override
     public void doJob(Map param) {
         try {

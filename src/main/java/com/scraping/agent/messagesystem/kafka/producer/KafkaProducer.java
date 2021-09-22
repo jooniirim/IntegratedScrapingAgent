@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+/**
+ * Kafka Producer
+ */
 @Component
 @Qualifier("kafkaConsumer")
 public class KafkaProducer implements Producer<Map, ErrorMessageDto> {
@@ -23,34 +26,50 @@ public class KafkaProducer implements Producer<Map, ErrorMessageDto> {
     private final String accountErrorTopic = "alert.agent.account.error";
     private final String jobErrorTopic = "alert.agent.job.error";
 
+    /**
+     * 작업 개시 정보 produce
+     * @param map
+     */
     @Override
     public void requestLogSend(Map map) {
         kafkaTemplate.send(requestLogTopic, map);
     }
 
+    /**
+     * 작업 완료 정보 produce
+     * @param map
+     */
     @Override
     public void completeLogSend(Map map) {
         kafkaTemplate.send(completeLogTopic, map);
     }
 
+    /**
+     * 인증 계정 오류 정보 Produce
+     * @param map
+     */
     @Override
     public void accountErrorLogSend(Map map) {
         ErrorMessageDto errorMessageDto = ErrorMessageDto.builder()
                 .agentId(map.get("workId").toString())
                 .errorTime("에러 발생 timestamp")
                 .errorType("계정 에러")
-                .agentType("API or HTML")
+                .type("API or HTML")
                 .build();
         kafkaTemplate.send(accountErrorTopic, map);
     }
 
+    /**
+     * 요청에 따른 작업 진행 중 오류 발생 정보 Produce
+     * @param map
+     */
     @Override
     public void errorLogSend(Map map) {
         ErrorMessageDto errorMessageDto = ErrorMessageDto.builder()
                 .agentId(map.get("workId").toString())
                 .errorTime("에러 발생 timestamp")
                 .errorType("작업 실행 중 에러")
-                .agentType("API or HTML")
+                .type("API or HTML")
                 .build();
         kafkaTemplate.send(jobErrorTopic, map);
     }

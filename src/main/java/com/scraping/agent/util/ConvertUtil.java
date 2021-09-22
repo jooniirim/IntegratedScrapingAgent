@@ -12,6 +12,9 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Type Convert 관련 Util
+ */
 @Component
 public class ConvertUtil {
     public static Map<String, Object> getMapFromJsonObject(JSONObject jsonObj) {
