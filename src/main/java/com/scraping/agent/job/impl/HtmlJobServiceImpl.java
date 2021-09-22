@@ -1,19 +1,21 @@
 package com.scraping.agent.job.impl;
 
 import com.scraping.agent.client.HtmlClient;
-import com.scraping.agent.dto.ApiAgentDto;
-import com.scraping.agent.dto.ErrorMessageDto;
 import com.scraping.agent.dto.HtmlAgentDto;
 import com.scraping.agent.job.JobService;
+import com.scraping.agent.messagesystem.Producer;
+import com.scraping.agent.util.ConvertUtil;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class HtmlJobServiceImpl implements JobService {
     @Override
     public String getAgentType() {
@@ -21,31 +23,28 @@ public class HtmlJobServiceImpl implements JobService {
     }
 
     @Autowired
-    KafkaTemplate kafkaTemplate;
+    private HtmlClient htmlClient;
 
     @Autowired
-    HtmlClient htmlClient;
+    @Qualifier("kafkaProducer")
+    private Producer producer;
 
     @Override
     public void doJob(Map param) {
         try {
+            log.info("HTML - doJob ::::: 1. Map 에서 ApiAgentDto 로 변환");
+            HtmlAgentDto htmlAgentDto = (HtmlAgentDto) ConvertUtil.convertMapToObject(param, HtmlAgentDto.class);
 
-            HtmlAgentDto htmlAgentDto
-                    = HtmlAgentDto.builder()
-                        // 필요한 값들 build
-                    .build();
-            kafkaTemplate.send("logging.agent.job.request", htmlAgentDto);
+            log.info("HTML - doJob ::::: 2. job 개시 로깅 queue");
+            producer.requestLogSend(param);
 
-            log.info("Web Scraping Worker 호출");
+            log.info("HTML - doJob ::::: 3. Web Scraping Worker 호출");
+            htmlClient.callExternal(htmlAgentDto);
 
-            //TODO 재시도 처리 필요
-            htmlClient.rpcCall(htmlAgentDto);
-
-        }catch (Exception e){
-            log.info("Web Scraping Worker 호출 에러");
-            ErrorMessageDto errorMessageDto = ErrorMessageDto.builder()
-                    .build();
-            kafkaTemplate.send("alert.agent.job.error", errorMessageDto);
+        } catch (Exception e){
+            log.info("HTML - doJob ::::: Web Scraping Worker 호출 에러");
+            log.info("HTML - doJob ::::: 에러 Alert queue");
+            producer.errorLogSend(param);
         }
     }
 

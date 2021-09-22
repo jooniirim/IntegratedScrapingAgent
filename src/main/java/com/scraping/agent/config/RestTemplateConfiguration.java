@@ -23,25 +23,24 @@ import java.net.URI;
 @EnableRetry
 @Configuration
 public class RestTemplateConfiguration {
-    @Value("${restTemplate.factory.readTimeout}")
+    @Value("${resttemplate.factory.read-timeout}")
     private int READ_TIMEOUT;
 
-    @Value("${restTemplate.factory.connectTimeout}")
+    @Value("${resttemplate.factory.connect-timeout}")
     private int CONNECT_TIMEOUT;
 
-    @Value("${restTemplate.httpClient.maxConnTotal}")
+    @Value("${resttemplate.httpclient.max-conn-total}")
     private int MAX_CONN_TOTAL;
 
-    @Value("${restTemplate.httpClient.maxConnPerRoute}")
+    @Value("${resttemplate.httpclient.max-conn-per-route}")
     private int MAX_CONN_PER_ROUTE;
 
-    @Value("${restTemplate.retry.maxRetryAttempts}")
+    @Value("${resttemplate.retry.attempts}")
     private int MAX_RETRY_ATTEMPTS;
 
     @Bean
     public RestTemplate retryableRestTemplate(){
         
-        //Connection Pool 설정
         HttpComponentsClientHttpRequestFactory factory
                 = new HttpComponentsClientHttpRequestFactory();
 
@@ -65,7 +64,7 @@ public class RestTemplateConfiguration {
             public <T> ResponseEntity<String> exchangeRecover(RestClientException e) {
                 log.info("재시도 횟수 초과!!!!");
                 log.info("1) DB 테이블 상에서 에러 상태로 변경 2) Error Queue에 Produce");
-                return ResponseEntity.badRequest().body("재시도 실패"); // 3
+                return ResponseEntity.badRequest().body("재시도 실패");
             }
         };
         return restTemplate;

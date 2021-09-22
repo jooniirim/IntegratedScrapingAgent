@@ -1,17 +1,19 @@
 package com.scraping.agent.client;
 
 import com.scraping.agent.dto.ApiAgentDto;
+import com.scraping.agent.messagesystem.Producer;
 import com.scraping.agent.service.ApiService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Retryable;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.stereotype.Service;
 
+import javax.naming.AuthenticationException;
 import java.util.Map;
 
 /*
@@ -19,29 +21,38 @@ import java.util.Map;
  */
 @Slf4j
 @Retryable
-@Component
-public class ApiClient {
-    @Autowired
-    private RestTemplate retryableRestTemplate;
+@Service
+@AllArgsConstructor
+public class ApiClient implements Client<ApiAgentDto>{
     @Autowired
     ApiService apiService;
 
-    public Map<String, Object> restApiCall(ApiAgentDto apiAgentDto) throws Exception{
+    @Autowired
+    @Qualifier("kafkaProducer")
+    private Producer producer;
+
+    @Override
+    public void callExternal(ApiAgentDto apiAgentDto) throws Exception{
         // TODO 여러 Api 스펙에 대응해서 조립할 방법 필요(querystring 생성 시)
-        String apiUrl = apiAgentDto.getApiUrl();
+        try {
+            String apiUrl = apiAgentDto.getApiUrl();
 
-        //호출 대상 API 마다 spec이 다르겠지만 header에 key 값 넣는 것은 공통일 것
-        log.info("API code 에 따른 API Key 값 가져오기");
-        String apiKey = apiService.getApiKey(apiAgentDto.getApiCode());
+            log.info("ApiClient - restApiCall ::::: 1. API code 에 따른 API Key 값 가져오기");
+            String apiKey = apiService.getApiKey(apiAgentDto.getApiCode());
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", apiKey);
-        HttpEntity<String> request = new HttpEntity<>(httpHeaders);
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.add("Authorization", apiKey);
+            HttpEntity<String> request = new HttpEntity<>(httpHeaders);
 
-        // retry 처리된 resttemplate 호출
-        ResponseEntity<Map> apiCall = retryableRestTemplate.exchange(apiUrl, HttpMethod.GET, request, Map.class);
+            log.info("ApiClient - restApiCall ::::: 2. 외부 REST API 호출");
+            ResponseEntity<Map> apiCall = (ResponseEntity<Map>) apiService.apiGetCall(apiUrl, request, Map.class);
+            Map<String, Object> result = apiCall.getBody();
 
-        return apiCall.getBody();
+            log.info("ApiClient - restApiCall ::::: 3. 외부 REST API 호출 결과 값 DB 저장");
+            log.info("ApiClient - restApiCall ::::: 4. 작업 완료 queue");
+        } catch (AuthenticationException authenticationException) {
+            log.info("ApiClient - restApiCall ::::: 인증 에러 Alert queue");
+            producer.errorLogSend(apiAgentDto);
+        }
     }
-
 }

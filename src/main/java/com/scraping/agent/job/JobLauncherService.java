@@ -1,41 +1,41 @@
 package com.scraping.agent.job;
 
-import com.scraping.agent.dto.ErrorMessageDto;
+import com.scraping.agent.messagesystem.Producer;
 import com.scraping.agent.util.ConvertUtil;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class JobLauncherService {
 
     @Autowired
     ConvertUtil convertUtil;
 
     @Autowired
-    KafkaTemplate kafkaTemplate;
+    @Qualifier("kafkaProducer")
+    private Producer producer;
 
-    private final JobSerivceFactory jobServiceFactory;
-
-    public JobLauncherService(JobSerivceFactory jobServiceFactory){
-        this.jobServiceFactory = jobServiceFactory;
-    }
+    @Autowired
+    private JobSerivceFactory jobServiceFactory;
 
     public void executeJob(String agentType, JSONObject requestDataJson) {
         try {
-            log.info("Type 에 따라 구동 Agent Job 지정 및 Data 전달");
+            log.info("JobLauncherService - executeJob ::::: 1. Type 에 따라 구동 Agent Job 지정 및 Data 전달");
             Map<String, Object> requestData = convertUtil.convertMapToJson(requestDataJson);
+            log.info("JobLauncherService - executeJob ::::: 2. doJob 호출");
             jobServiceFactory.getService(agentType).doJob(requestData);
         } catch (Exception e) {
-            log.info("Agent 요청 호출 에러");
-            ErrorMessageDto errorMessageDto = ErrorMessageDto.builder()
-                    .build();
-            kafkaTemplate.send("alert.agent.job.error", errorMessageDto);
+            log.info("JobLauncherService - error ::::: Agent 요청 호출 에러");
+            log.info("JobLauncherService - error ::::: 에러 Alert queue");
+            producer.errorLogSend(requestDataJson);
         }
 
     }

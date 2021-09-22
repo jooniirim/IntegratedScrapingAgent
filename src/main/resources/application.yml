@@ -1,9 +1,42 @@
-restTemplate:
+spring:
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/datajpa
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        # show_sql: true
+        format_sql: true
+  data:
+    web:
+      pageable:
+        default-page-size : 10
+        max-page-size : 2000
+logging.level:
+  org.hibernate.SQL: debug
+  # org.hibernate.type: trace
+
+kafka:
+  bootstrap-servers: 127.0.0.1:9092,127.0.0.1:9093,127.0.0.1:9094
+  offset:
+    reset: false
+  ackmode: MANUAL
+  consumer:
+    group-id: scraping-request
+  topic:
+    name: html-or-api-scraping
+  retry-count: 3
+
+resttemplate:
   factory:
-    readTimeout: 5000
-    connectTimeout: 3000
-  httpClient:
-    maxConnTotal: 100
-    maxConnPerRoute: 5
-  Retry:
-    maxRetryAttempts: 5
+    read-timeout: 5000
+    connect-timeout: 3000
+  httpclient:
+    max-conn-total: 100
+    max-conn-per-route: 5
+  retry:
+    attempts: 3

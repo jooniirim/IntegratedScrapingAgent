@@ -10,7 +10,7 @@ public class AgentApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(AgentApplication.class, args);
-		log.info("Scraping Agent Start");
+		log.info(":::::::::::::::::: Scraping Agent Start ::::::::::::::::::::");
 	}
 
 }

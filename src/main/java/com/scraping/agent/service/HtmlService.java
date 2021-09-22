@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.naming.AuthenticationException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,16 +18,24 @@ public class HtmlService {
     @Autowired
     private HtmlRepositoryImpl htmlRepository;
 
-    public Map<String, Object> getAccountInfo(String accountId){
+    public Map<String, Object> getAccountInfo(String accountId) throws Exception{
         Map<String, Object> account = new HashMap<>();
         HtmlAccountVO accountInfo = htmlRepository.getHtmlAccountInfo(accountId);
 
-        account.put("accountId", accountInfo.getAccountId());
-        account.put("accountPassword", accountInfo.getAccountPassword());
+        LocalDate now = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String formatedNow = now.format(formatter);
 
-        //TODO useYN이 N이거나 expireDate가 지난 시점인 경우 오류 처리 필요
+        if("N".equals(accountInfo.getUseYN()) || formatedNow.compareTo(accountInfo.getExpireDate()) < 0){
+            throw new AuthenticationException("사용 불가한 계정, 계정 정보 확인 필요");
+        }else {
+            account.put("accountId", accountInfo.getAccountId());
+            account.put("accountPassword", accountInfo.getAccountPassword());
+            return account;
 
-        return account;
+        }
+
     }
+
 
 }

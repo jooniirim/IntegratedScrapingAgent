@@ -2,8 +2,7 @@ package com.scraping.agent.dto;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class HtmlAgentDto {
     private String type;                // api 인지 html인지
